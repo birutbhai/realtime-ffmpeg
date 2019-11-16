@@ -94,6 +94,8 @@ int main(int argc, char** argv)
     uint8_t * buffer = NULL;
     SDL_Window * screen;
     SDL_Event event;
+    double fps;
+    double period;
 
 	if ( !(argc > 2) ){
         printHelpMenu();
@@ -195,10 +197,10 @@ int main(int argc, char** argv)
         printf("Could not allocate frame.\n");
         return -1;
     }
-    double fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
+    fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
 
                     // get clip sleep time
-    double period = 1000.0/(double)fps;
+    period = 1000.0/(double)fps;
     param.period = ms2ns(period);
 	param.relative_deadline = ms2ns(period);
 
