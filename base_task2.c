@@ -414,10 +414,10 @@ int job(void){
 
                 if (++i <= maxFramesToDecode){
                     // get clip fps
-                    double fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
+                    // double fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
 
-                    // get clip sleep time
-                    double sleep_time = 1.0/(double)fps;
+                    // // get clip sleep time
+                    // double sleep_time = 1.0/(double)fps;
 
                     // sleep: usleep won't work when using SDL_CreateWindow
                     // usleep(sleep_time);
@@ -435,18 +435,18 @@ int job(void){
                     rect.w = pCodecCtx->width;
                     rect.h = pCodecCtx->height;
 
-                    printf(
-                        "Frame %c (%d) pts %d dts %d key_frame %d [coded_picture_number %d, display_picture_number %d, %dx%d]\n",
-                        av_get_picture_type_char(pFrame->pict_type),
-                        pCodecCtx->frame_number,
-                        pFrame->pts,
-                        pFrame->pkt_dts,
-                        pFrame->key_frame,
-                        pFrame->coded_picture_number,
-                        pFrame->display_picture_number,
-                        pCodecCtx->width,
-                        pCodecCtx->height
-                    );
+                    // printf(
+                    //     "Frame %c (%d) pts %d dts %d key_frame %d [coded_picture_number %d, display_picture_number %d, %dx%d]\n",
+                    //     av_get_picture_type_char(pFrame->pict_type),
+                    //     pCodecCtx->frame_number,
+                    //     pFrame->pts,
+                    //     pFrame->pkt_dts,
+                    //     pFrame->key_frame,
+                    //     pFrame->coded_picture_number,
+                    //     pFrame->display_picture_number,
+                    //     pCodecCtx->width,
+                    //     pCodecCtx->height
+                    // );
 
                     // Use this function to update a rectangle within a planar
                     // YV12 or IYUV texture with new pixel data.
