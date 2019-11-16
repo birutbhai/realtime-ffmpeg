@@ -81,18 +81,23 @@ SDL_Renderer * renderer;
 SDL_Texture * texture;
 AVPacket * pPacket;
 struct SwsContext * sws_ctx;
+int maxFramesToDecode;
+
 
 int main(int argc, char** argv)
 {
+	int ret;
+	int i;
+	int do_exit;
+	struct rt_task param;
+	int numBytes;
+    uint8_t * buffer = NULL;
+
 	if ( !(argc > 2) ){
         printHelpMenu();
         return -1;
     }
-
-    int ret = -1;
-
-	int do_exit;
-	struct rt_task param;
+    
 
 	/* Setup task parameters */
 	init_rt_task_param(&param);
@@ -123,6 +128,7 @@ int main(int argc, char** argv)
 	 * 2) Work environment (e.g., global data structures, file data, etc.) would
 	 *    be setup here.
 	 */
+	ret = -1;
 	ret = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER);   // [1]
     if (ret != 0){
         // error while initializing SDL
@@ -148,7 +154,7 @@ int main(int argc, char** argv)
 
     av_dump_format(pFormatCtx, 0, argv[1], 0);
 
-    int i;
+    
     videoStream = -1;
     for (i = 0; i < pFormatCtx->nb_streams; i++){
         if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO){
@@ -255,8 +261,7 @@ int main(int argc, char** argv)
      * YUV420 data from ffmpeg.
      */
 
-    int numBytes;
-    uint8_t * buffer = NULL;
+    
 
     numBytes = av_image_get_buffer_size(
                 AV_PIX_FMT_YUV420P,
@@ -281,7 +286,7 @@ int main(int argc, char** argv)
         32
     );
 
-    int maxFramesToDecode;
+    
     sscanf(argv[2], "%d", &maxFramesToDecode);
 
 
