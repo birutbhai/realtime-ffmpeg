@@ -339,20 +339,8 @@ int main(int argc, char** argv)
 		do_exit = job();
 		
 
-		// handle Ctrl + C event
-		SDL_PollEvent(&event);
-        switch(event.type){
-            case SDL_QUIT:{
-                SDL_Quit();
-                exit(0);
-            }
-            break;
-
-            default:{
-                // nothing to do
-            }
-            break;
-        }
+		
+		
 	} while (!do_exit);
 
 
@@ -480,10 +468,22 @@ int job(void){
             }
         }
         av_packet_unref(pPacket);
+
+        // handle Ctrl + C event
+        SDL_PollEvent(&event);
+        switch(event.type){
+            case SDL_QUIT:{
+                SDL_Quit();
+                return 1;
+            }
+            break;
+
+            default:{
+                // nothing to do
+            }
+            break;
+        }
     }
 
-    if(i < 1){
-    	return 1;
-    }
-    return 0;
+    return 1-i;
 }
