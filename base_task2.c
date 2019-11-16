@@ -81,7 +81,6 @@ SDL_Renderer * renderer;
 SDL_Texture * texture;
 AVPacket * pPacket;
 struct SwsContext * sws_ctx;
-int maxFramesToDecode;
 
 
 int main(int argc, char** argv)
@@ -96,7 +95,7 @@ int main(int argc, char** argv)
     SDL_Event event;
     double fps,sleep_time;
 
-	if ( !(argc > 2) ){
+	if ( !(argc > 1) ){
         printHelpMenu();
         return -1;
     }
@@ -206,7 +205,7 @@ int main(int argc, char** argv)
     // usleep(sleep_time);
     // Use SDL_Delay in milliseconds to allow for cpu scheduling
     
-    printf("sleep_time : %lf", sleep_time);
+    printf("\n\n sleep_time : %lf \n", sleep_time);
     // TODO: change
     // SDL_Delay((1000 * sleep_time) - 10);    // [5]
 
@@ -386,8 +385,8 @@ int main(int argc, char** argv)
 
 void printHelpMenu(){
     printf("Invalid arguments.\n\n");
-    printf("Usage: ./tutorial02 <filename> <max-frames-to-decode>\n\n");
-    printf("e.g: ./tutorial02 /home/rambodrahmani/Videos/video.mp4 200\n");
+    printf("Usage: ./base_task <filename>\n\n");
+    printf("e.g: ./base_task /home/rambodrahmani/Videos/video.mp4\n");
 }
 
 int job(void){
