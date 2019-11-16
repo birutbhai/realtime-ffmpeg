@@ -301,7 +301,6 @@ int main(int argc, char** argv)
     );
 
     
-    sscanf(argv[2], "%d", &maxFramesToDecode);
 
 
 	/*****
