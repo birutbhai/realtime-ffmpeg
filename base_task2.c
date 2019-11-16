@@ -94,6 +94,7 @@ int main(int argc, char** argv)
     uint8_t * buffer = NULL;
     SDL_Window * screen;
     SDL_Event event;
+    double fps,sleep_time;
 
 	if ( !(argc > 2) ){
         printHelpMenu();
@@ -196,10 +197,10 @@ int main(int argc, char** argv)
         printf("Could not allocate frame.\n");
         return -1;
     }
-    double fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
+    fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
 
     // get clip sleep time
-    double sleep_time = 1000.0/fps - 10;
+    sleep_time = 1000.0/fps - 10;
 
     // sleep: usleep won't work when using SDL_CreateWindow
     // usleep(sleep_time);
@@ -391,7 +392,6 @@ void printHelpMenu(){
 
 int job(void){
 	/* Do real-time calculation. */
-	int i = 0;
 	int ret = -1;
 	SDL_Rect rect;
     if(av_read_frame(pFormatCtx, pPacket) >= 0){
@@ -399,15 +399,15 @@ int job(void){
             ret = avcodec_send_packet(pCodecCtx, pPacket);
             if (ret < 0){
                 printf("Error sending packet for decoding.\n");
-                return -1;
+                return 1;
             }
             ret = avcodec_receive_frame(pCodecCtx, pFrame);
 
             if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-                break;
+                return 1;
             else if (ret < 0){
                 printf("Error while decoding.\n");
-                return -1;
+                return 1;
             }
 
             // Convert the image into YUV format that SDL uses:
