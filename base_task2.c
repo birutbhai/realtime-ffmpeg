@@ -81,6 +81,7 @@ SDL_Renderer * renderer;
 SDL_Texture * texture;
 AVPacket * pPacket;
 struct SwsContext * sws_ctx;
+SDL_Event event;
 // int maxFramesToDecode;
 
 
@@ -93,7 +94,7 @@ int main(int argc, char** argv)
 	int numBytes;
     uint8_t * buffer = NULL;
     SDL_Window * screen;
-    SDL_Event event;
+    
     double fps;
     double period;
 
