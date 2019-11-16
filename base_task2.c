@@ -389,7 +389,7 @@ int job(void){
 	int i = 0;
 	int ret = -1;
 	SDL_Rect rect;
-    if(av_read_frame(pFormatCtx, pPacket) >= 0){
+    while(av_read_frame(pFormatCtx, pPacket) >= 0){
         if (pPacket->stream_index == videoStream){
             ret = avcodec_send_packet(pCodecCtx, pPacket);
             if (ret < 0){
@@ -487,7 +487,8 @@ int job(void){
         }
         av_packet_unref(pPacket);
     }
-    else{
+    
+    if(i < 1){
     	return 1;
     }
     return 0;
