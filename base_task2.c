@@ -81,6 +81,7 @@ SDL_Renderer * renderer;
 SDL_Texture * texture;
 AVPacket * pPacket;
 struct SwsContext * sws_ctx;
+int maxFramesToDecode;
 
 
 int main(int argc, char** argv)
@@ -93,9 +94,8 @@ int main(int argc, char** argv)
     uint8_t * buffer = NULL;
     SDL_Window * screen;
     SDL_Event event;
-    double fps,sleep_time;
 
-	if ( !(argc > 1) ){
+	if ( !(argc > 2) ){
         printHelpMenu();
         return -1;
     }
@@ -196,18 +196,6 @@ int main(int argc, char** argv)
         printf("Could not allocate frame.\n");
         return -1;
     }
-    fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
-
-    // get clip sleep time
-    sleep_time = 1000.0/fps - 10;
-
-    // sleep: usleep won't work when using SDL_CreateWindow
-    // usleep(sleep_time);
-    // Use SDL_Delay in milliseconds to allow for cpu scheduling
-    
-    printf("\n\n sleep_time : %lf \n", sleep_time);
-    // TODO: change
-    // SDL_Delay((1000 * sleep_time) - 10);    // [5]
 
     // Create a window with the specified position, dimensions, and flags.
     screen = SDL_CreateWindow( // [2]
@@ -301,6 +289,7 @@ int main(int argc, char** argv)
     );
 
     
+    sscanf(argv[2], "%d", &maxFramesToDecode);
 
 
 	/*****
@@ -384,12 +373,13 @@ int main(int argc, char** argv)
 
 void printHelpMenu(){
     printf("Invalid arguments.\n\n");
-    printf("Usage: ./base_task <filename>\n\n");
-    printf("e.g: ./base_task /home/rambodrahmani/Videos/video.mp4\n");
+    printf("Usage: ./tutorial02 <filename> <max-frames-to-decode>\n\n");
+    printf("e.g: ./tutorial02 /home/rambodrahmani/Videos/video.mp4 200\n");
 }
 
 int job(void){
 	/* Do real-time calculation. */
+	int i = 0;
 	int ret = -1;
 	SDL_Rect rect;
     if(av_read_frame(pFormatCtx, pPacket) >= 0){
@@ -397,82 +387,99 @@ int job(void){
             ret = avcodec_send_packet(pCodecCtx, pPacket);
             if (ret < 0){
                 printf("Error sending packet for decoding.\n");
-                return 1;
+                return -1;
             }
-            ret = avcodec_receive_frame(pCodecCtx, pFrame);
+            while (ret >= 0){
+                ret = avcodec_receive_frame(pCodecCtx, pFrame);
 
-            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-                return 1;
-            else if (ret < 0){
-                printf("Error while decoding.\n");
-                return 1;
+                if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+                    break;
+                else if (ret < 0){
+                    printf("Error while decoding.\n");
+                    return -1;
+                }
+
+                // Convert the image into YUV format that SDL uses:
+                // We change the conversion format to PIX_FMT_YUV420P, and we
+                // use sws_scale just like before.
+                sws_scale(
+                    sws_ctx,
+                    (uint8_t const * const *)pFrame->data,
+                    pFrame->linesize,
+                    0,
+                    pCodecCtx->height,
+                    pict->data,
+                    pict->linesize
+                );
+
+                if (++i <= maxFramesToDecode){
+                    // get clip fps
+                    double fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
+
+                    // get clip sleep time
+                    double sleep_time = 1.0/(double)fps;
+
+                    // sleep: usleep won't work when using SDL_CreateWindow
+                    // usleep(sleep_time);
+                    // Use SDL_Delay in milliseconds to allow for cpu scheduling
+                    // SDL_Delay((1000 * sleep_time) - 10);    // [5]
+
+                    // The simplest struct in SDL. It contains only four shorts. x, y which
+                    // holds the position and w, h which holds width and height.It's important
+                    // to note that 0, 0 is the upper-left corner in SDL. So a higher y-value
+                    // means lower, and the bottom-right corner will have the coordinate x + w,
+                    // y + h.
+                    
+                    rect.x = 0;
+                    rect.y = 0;
+                    rect.w = pCodecCtx->width;
+                    rect.h = pCodecCtx->height;
+
+                    printf(
+                        "Frame %c (%d) pts %d dts %d key_frame %d [coded_picture_number %d, display_picture_number %d, %dx%d]\n",
+                        av_get_picture_type_char(pFrame->pict_type),
+                        pCodecCtx->frame_number,
+                        pFrame->pts,
+                        pFrame->pkt_dts,
+                        pFrame->key_frame,
+                        pFrame->coded_picture_number,
+                        pFrame->display_picture_number,
+                        pCodecCtx->width,
+                        pCodecCtx->height
+                    );
+
+                    // Use this function to update a rectangle within a planar
+                    // YV12 or IYUV texture with new pixel data.
+                    SDL_UpdateYUVTexture(
+                        texture,            // the texture to update
+                        &rect,              // a pointer to the rectangle of pixels to update, or NULL to update the entire texture
+                        pict->data[0],      // the raw pixel data for the Y plane
+                        pict->linesize[0],  // the number of bytes between rows of pixel data for the Y plane
+                        pict->data[1],      // the raw pixel data for the U plane
+                        pict->linesize[1],  // the number of bytes between rows of pixel data for the U plane
+                        pict->data[2],      // the raw pixel data for the V plane
+                        pict->linesize[2]   // the number of bytes between rows of pixel data for the V plane
+                    );
+
+                    // clear the current rendering target with the drawing color
+                    SDL_RenderClear(renderer);
+
+                    // copy a portion of the texture to the current rendering target
+                    SDL_RenderCopy(
+                        renderer,   // the rendering context
+                        texture,    // the source texture
+                        NULL,       // the source SDL_Rect structure or NULL for the entire texture
+                        NULL        // the destination SDL_Rect structure or NULL for the entire rendering
+                                    // target; the texture will be stretched to fill the given rectangle
+                    );
+
+                    // update the screen with any rendering performed since the previous call
+                    SDL_RenderPresent(renderer);
+                }
+                else{
+                    break;
+                }
             }
-
-            // Convert the image into YUV format that SDL uses:
-            // We change the conversion format to PIX_FMT_YUV420P, and we
-            // use sws_scale just like before.
-            sws_scale(
-                sws_ctx,
-                (uint8_t const * const *)pFrame->data,
-                pFrame->linesize,
-                0,
-                pCodecCtx->height,
-                pict->data,
-                pict->linesize
-            );
-            
-
-            // The simplest struct in SDL. It contains only four shorts. x, y which
-            // holds the position and w, h which holds width and height.It's important
-            // to note that 0, 0 is the upper-left corner in SDL. So a higher y-value
-            // means lower, and the bottom-right corner will have the coordinate x + w,
-            // y + h.
-            
-            rect.x = 0;
-            rect.y = 0;
-            rect.w = pCodecCtx->width;
-            rect.h = pCodecCtx->height;
-
-            // printf(
-            //     "Frame %c (%d) pts %d dts %d key_frame %d [coded_picture_number %d, display_picture_number %d, %dx%d]\n",
-            //     av_get_picture_type_char(pFrame->pict_type),
-            //     pCodecCtx->frame_number,
-            //     pFrame->pts,
-            //     pFrame->pkt_dts,
-            //     pFrame->key_frame,
-            //     pFrame->coded_picture_number,
-            //     pFrame->display_picture_number,
-            //     pCodecCtx->width,
-            //     pCodecCtx->height
-            // );
-
-            // Use this function to update a rectangle within a planar
-            // YV12 or IYUV texture with new pixel data.
-            SDL_UpdateYUVTexture(
-                texture,            // the texture to update
-                &rect,              // a pointer to the rectangle of pixels to update, or NULL to update the entire texture
-                pict->data[0],      // the raw pixel data for the Y plane
-                pict->linesize[0],  // the number of bytes between rows of pixel data for the Y plane
-                pict->data[1],      // the raw pixel data for the U plane
-                pict->linesize[1],  // the number of bytes between rows of pixel data for the U plane
-                pict->data[2],      // the raw pixel data for the V plane
-                pict->linesize[2]   // the number of bytes between rows of pixel data for the V plane
-            );
-
-            // clear the current rendering target with the drawing color
-            SDL_RenderClear(renderer);
-
-            // copy a portion of the texture to the current rendering target
-            SDL_RenderCopy(
-                renderer,   // the rendering context
-                texture,    // the source texture
-                NULL,       // the source SDL_Rect structure or NULL for the entire texture
-                NULL        // the destination SDL_Rect structure or NULL for the entire rendering
-                            // target; the texture will be stretched to fill the given rectangle
-            );
-
-            // update the screen with any rendering performed since the previous call
-            SDL_RenderPresent(renderer);
         }
         av_packet_unref(pPacket);
     }
