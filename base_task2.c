@@ -92,6 +92,8 @@ int main(int argc, char** argv)
 	struct rt_task param;
 	int numBytes;
     uint8_t * buffer = NULL;
+    SDL_Window * screen;
+    SDL_Event event;
 
 	if ( !(argc > 2) ){
         printHelpMenu();
@@ -196,7 +198,7 @@ int main(int argc, char** argv)
     }
 
     // Create a window with the specified position, dimensions, and flags.
-    SDL_Window * screen = SDL_CreateWindow( // [2]
+    screen = SDL_CreateWindow( // [2]
                             "SDL Video Player",
                             SDL_WINDOWPOS_UNDEFINED,
                             SDL_WINDOWPOS_UNDEFINED,
@@ -272,7 +274,7 @@ int main(int argc, char** argv)
     buffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
 
     // used later to handle quit event
-    SDL_Event event;
+    
 
     pict = av_frame_alloc();
 
@@ -379,6 +381,7 @@ int job(void){
 	/* Do real-time calculation. */
 	int i = 0;
 	int ret = -1;
+	SDL_Rect rect;
     if(av_read_frame(pFormatCtx, pPacket) >= 0){
         if (pPacket->stream_index == videoStream){
             ret = avcodec_send_packet(pCodecCtx, pPacket);
@@ -426,7 +429,7 @@ int job(void){
                     // to note that 0, 0 is the upper-left corner in SDL. So a higher y-value
                     // means lower, and the bottom-right corner will have the coordinate x + w,
                     // y + h.
-                    SDL_Rect rect;
+                    
                     rect.x = 0;
                     rect.y = 0;
                     rect.w = pCodecCtx->width;
@@ -480,4 +483,8 @@ int job(void){
         }
         av_packet_unref(pPacket);
     }
+    else{
+    	return 1;
+    }
+    return 0;
 }
