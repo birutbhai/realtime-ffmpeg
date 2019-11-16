@@ -435,18 +435,18 @@ int job(void){
                     rect.w = pCodecCtx->width;
                     rect.h = pCodecCtx->height;
 
-                    printf(
-                        "Frame %c (%d) pts %d dts %d key_frame %d [coded_picture_number %d, display_picture_number %d, %dx%d]\n",
-                        av_get_picture_type_char(pFrame->pict_type),
-                        pCodecCtx->frame_number,
-                        pFrame->pts,
-                        pFrame->pkt_dts,
-                        pFrame->key_frame,
-                        pFrame->coded_picture_number,
-                        pFrame->display_picture_number,
-                        pCodecCtx->width,
-                        pCodecCtx->height
-                    );
+                    // printf(
+                    //     "Frame %c (%d) pts %d dts %d key_frame %d [coded_picture_number %d, display_picture_number %d, %dx%d]\n",
+                    //     av_get_picture_type_char(pFrame->pict_type),
+                    //     pCodecCtx->frame_number,
+                    //     pFrame->pts,
+                    //     pFrame->pkt_dts,
+                    //     pFrame->key_frame,
+                    //     pFrame->coded_picture_number,
+                    //     pFrame->display_picture_number,
+                    //     pCodecCtx->width,
+                    //     pCodecCtx->height
+                    // );
 
                     // Use this function to update a rectangle within a planar
                     // YV12 or IYUV texture with new pixel data.
