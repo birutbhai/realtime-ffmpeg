@@ -104,8 +104,7 @@ int main(int argc, char** argv)
 	/* Setup task parameters */
 	init_rt_task_param(&param);
 	param.exec_cost = ms2ns(EXEC_COST);
-	param.period = ms2ns(PERIOD);
-	param.relative_deadline = ms2ns(RELATIVE_DEADLINE);
+	
 
 	/* What to do in the case of budget overruns? */
 	param.budget_policy = NO_ENFORCEMENT;
@@ -196,6 +195,12 @@ int main(int argc, char** argv)
         printf("Could not allocate frame.\n");
         return -1;
     }
+    double fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
+
+                    // get clip sleep time
+    double period = 1000.0/(double)fps;
+    param.period = ms2ns(period);
+	param.relative_deadline = ms2ns(period);
 
     // Create a window with the specified position, dimensions, and flags.
     screen = SDL_CreateWindow( // [2]
@@ -327,7 +332,7 @@ int main(int argc, char** argv)
 	 */
 	do {
 		/* Wait until the next job is released. */
-		// sleep_next_period();
+		sleep_next_period();
 		/* Invoke job. */
 		do_exit = job();
 		
@@ -414,10 +419,7 @@ int job(void){
 
                 if (++i <= maxFramesToDecode){
                     // get clip fps
-                    // double fps = av_q2d(pFormatCtx->streams[videoStream]->r_frame_rate);
-
-                    // // get clip sleep time
-                    // double sleep_time = 1.0/(double)fps;
+                    
 
                     // sleep: usleep won't work when using SDL_CreateWindow
                     // usleep(sleep_time);
