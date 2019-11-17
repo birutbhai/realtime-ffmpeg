@@ -98,7 +98,7 @@ int main(int argc, char** argv)
     double fps;
     double period;
 
-	if ( !(argc > 2) ){
+	if ( !(argc > 1) ){
         printHelpMenu();
         return -1;
     }
@@ -369,8 +369,7 @@ int main(int argc, char** argv)
 
 void printHelpMenu(){
     printf("Invalid arguments.\n\n");
-    printf("Usage: ./tutorial02 <filename> <max-frames-to-decode>\n\n");
-    printf("e.g: ./tutorial02 /home/rambodrahmani/Videos/video.mp4 200\n");
+    printf("Usage: ./base_task <filename>\n\n");
 }
 
 int job(void){
