@@ -356,6 +356,21 @@ int main(int argc, char** argv)
 	/***** 
 	 * 7) Clean up, maybe print results and stats, and exit.
 	 */
+	
+    // handle Ctrl + C event
+    SDL_PollEvent(&event);
+    switch(event.type){
+        case SDL_QUIT:{
+            SDL_Quit();
+            return 1;
+        }
+        break;
+
+        default:{
+            // nothing to do
+        }
+        break;
+    }
 
 	av_frame_free(&pFrame);
     av_free(pFrame);
@@ -468,21 +483,6 @@ int job(void){
             }
         }
         av_packet_unref(pPacket);
-
-        // handle Ctrl + C event
-        SDL_PollEvent(&event);
-        switch(event.type){
-            case SDL_QUIT:{
-                SDL_Quit();
-                return 1;
-            }
-            break;
-
-            default:{
-                // nothing to do
-            }
-            break;
-        }
     }
 
     return 1-i;
