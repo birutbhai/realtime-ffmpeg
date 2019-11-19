@@ -203,7 +203,7 @@ int main(int argc, char** argv)
                     // get clip sleep time
     period = 1000.0/(double)fps;
     param.period = ms2ns(period);
-	param.relative_deadline = ms2ns(period);
+    param.relative_deadline = ms2ns(period - 19);
     if(fps > 20)
         param.priority = 1;
     else
