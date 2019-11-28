@@ -205,64 +205,67 @@ void *detect_in_thread(void *ptr)
     return 0;
 }
 
-int main(int argc, char * argv[])
+int detect()
 {
-
-
-
+    static int flag = 0;
+    static list *options;
+    static char *name_list;
+    static char **names;
     int count = 0;
+    pthread_t detect_thread;
+    pthread_t fetch_thread;
+    double time;
+    float nms=.45;
+    int i;
 //    void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh, char *outfile, int fullscreen)
 //    float thresh = 0.5;
 //    float hier_thresh = 0.5;
     int fullscreen = 0;
-    list *options = read_data_cfg("config/coco.data");
-    char *name_list = option_find_str(options, "names", "data/names.list");
-    char **names = get_labels(name_list);
 
-    image **alphabet = load_alphabet();
-    net = load_network("config/yolov3.cfg", "config/yolov3.weights", 0);
-    set_batch_network(net, 1);
+    if(flag == 0){
+        options = read_data_cfg("config/coco.data");
+        name_list = option_find_str(options, "names", "data/names.list");
+        names = get_labels(name_list);
 
-    demo_names = names;
-    demo_alphabet = alphabet;
-    demo_thresh = 0.5;
-    demo_hier = 0.5;
-    srand(2222222);
+        image **alphabet = load_alphabet();
+        net = load_network("config/yolov3.cfg", "config/yolov3.weights", 0);
+        set_batch_network(net, 1);
+        demo_names = names;
+        demo_alphabet = alphabet;
+        demo_thresh = 0.45;
+        demo_hier = 0.5;
+        srand(2222222);
 
-    int i;
-    demo_total = size_network(net);
-    predictions = calloc(demo_frame, sizeof(float*));
-    for (i = 0; i < demo_frame; ++i){
-        predictions[i] = calloc(demo_total, sizeof(float));
+        
+        demo_total = size_network(net);
+        predictions = calloc(demo_frame, sizeof(float*));
+        for (i = 0; i < demo_frame; ++i){
+            predictions[i] = calloc(demo_total, sizeof(float));
+        }
+        avg = calloc(demo_total, sizeof(float));
+        
+
+        layer l = net->layers[net->n-1];
+        demo_classes = l.classes;
+
+    //    image im = load_image_color(input,0,0);
+    //    image sized = letterbox_image(im, net->w, net->h);
+
+        cap = open_video_stream("Iron_Man-Trailer_HD.mp4", 0, 0, 0, 0);
+        buff[0] = get_image_from_stream(cap);
+        buff[1] = copy_image(buff[0]);
+        buff[2] = copy_image(buff[0]);
+        buff_letter[0] = letterbox_image(buff[0], net->w, net->h);
+        buff_letter[1] = letterbox_image(buff[0], net->w, net->h);
+        buff_letter[2] = letterbox_image(buff[0], net->w, net->h);
+
+        make_window("Demo", buff[0].w, buff[0].h, fullscreen);
+        flag = 1;
     }
-    avg = calloc(demo_total, sizeof(float));
-    double time;
-    char *input = "data/dog.jpg";
-    float nms=.45;
-
-    pthread_t detect_thread;
-    pthread_t fetch_thread;
-
-    layer l = net->layers[net->n-1];
-    demo_classes = l.classes;
-
-//    image im = load_image_color(input,0,0);
-//    image sized = letterbox_image(im, net->w, net->h);
-
-    cap = open_video_stream("Iron_Man-Trailer_HD.mp4", 0, 0, 0, 0);
-    buff[0] = get_image_from_stream(cap);
-    buff[1] = copy_image(buff[0]);
-    buff[2] = copy_image(buff[0]);
-    buff_letter[0] = letterbox_image(buff[0], net->w, net->h);
-    buff_letter[1] = letterbox_image(buff[0], net->w, net->h);
-    buff_letter[2] = letterbox_image(buff[0], net->w, net->h);
-
-    make_window("Demo", buff[0].w, buff[0].h, fullscreen);
 
 
 
-
-    while(!demo_done){
+    if(!demo_done){
         buff_index = (buff_index + 1) %3;
         if(pthread_create(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed");
         if(pthread_create(&detect_thread, 0, detect_in_thread, 0)) error("Thread creation failed");

@@ -11,9 +11,7 @@
     #include "curand.h"
     #include "cublas_v2.h"
 
-    #ifdef CUDNN
     #include "cudnn.h"
-    #endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -404,7 +402,6 @@ struct layer{
     float * rand_gpu;
     float * squared_gpu;
     float * norms_gpu;
-#ifdef CUDNN
     cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc;
     cudnnTensorDescriptor_t dsrcTensorDesc, ddstTensorDesc;
     cudnnTensorDescriptor_t normTensorDesc;
@@ -414,7 +411,6 @@ struct layer{
     cudnnConvolutionFwdAlgo_t fw_algo;
     cudnnConvolutionBwdDataAlgo_t bd_algo;
     cudnnConvolutionBwdFilterAlgo_t bf_algo;
-#endif
 };
 
 void free_layer(layer);
