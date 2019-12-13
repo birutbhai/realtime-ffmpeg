@@ -70,6 +70,7 @@ static int demo_frame = 3;
 static char **demo_names;
 static image **demo_alphabet;
 static int demo_classes;
+double avg_fps = 0;
 
 int size_network(network *net)
 {
@@ -199,13 +200,13 @@ void *detect_in_thread(void *ptr)
     image display = buff[(buff_index+2) % 3];
     draw_detections(display, dets, nboxes, demo_thresh, demo_names, demo_alphabet, demo_classes);
     free_detections(dets, nboxes);
-
+    avg_fps += fps;
     demo_index = (demo_index + 1)%demo_frame;
     running = 0;
     return 0;
 }
 
-int detect()
+int main()
 {
     static int flag = 0;
     static list *options;
@@ -251,7 +252,7 @@ int detect()
     //    image im = load_image_color(input,0,0);
     //    image sized = letterbox_image(im, net->w, net->h);
 
-        cap = open_video_stream("Iron_Man-Trailer_HD.mp4", 0, 0, 0, 0);
+        cap = open_video_stream("TRA3106.mp4", 0, 0, 0, 0);
         buff[0] = get_image_from_stream(cap);
         buff[1] = copy_image(buff[0]);
         buff[2] = copy_image(buff[0]);
@@ -265,7 +266,7 @@ int detect()
 
 
 
-    if(!demo_done){
+    while(!demo_done){
         buff_index = (buff_index + 1) %3;
         if(pthread_create(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed");
         if(pthread_create(&detect_thread, 0, detect_in_thread, 0)) error("Thread creation failed");
@@ -281,7 +282,7 @@ int detect()
     //image sized = crop_image(sized2, -((net->w - sized2.w)/2), -((net->h - sized2.h)/2), net->w, net->h);
     //resize_network(net, sized.w, sized.h);
 
-
+    printf("Avg FPS: %lf\n", avg_fps / (double) count);
 
 //    float *X = sized.data;
 //    time=what_time_is_it_now();
